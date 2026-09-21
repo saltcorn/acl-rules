@@ -1,7 +1,7 @@
 {
   "name": "@saltcorn/acl-rules",
   "version": "0.0.1",
-  "description": "Access control plugin based on (Subject, Object, Verb, [Adjectives]) rules",
+  "description": "Access control plugin based on (Subject, Object, Verb) rules",
   "main": "index.js",
   "dependencies": {
     "@saltcorn/markup": "^0.9.0",
@@ -9,15 +9,9 @@
   },
   "author": "Christian Hugo",
   "license": "MIT",
-  "devDependencies": {
-    "jest": "^29.7.0"
-  },
   "repository": "github:saltcorn/acl-rules",
-  "jest": {
-    "testEnvironment": "node"
-  },
   "scripts": {
-    "test": "jest"
+    "test": "cd tests && node --test"
   },
   "eslintConfig": {
     "extends": "eslint:recommended",
