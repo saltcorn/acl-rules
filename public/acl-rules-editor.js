@@ -33,7 +33,7 @@
   const PRIORITY_PRESETS = { low: -10, normal: 0, high: 10 };
   const presetKeyForValue = (v) =>
     Object.keys(PRIORITY_PRESETS).find(
-      (k) => PRIORITY_PRESETS[k] === Number(v),
+      (k) => PRIORITY_PRESETS[k] === Number(v)
     ) || null;
 
   // modal field defs, shown in this order; showUnless(rule) hides a field
@@ -58,7 +58,7 @@
           page: "Page name",
           trigger: "Trigger name",
           api: "API route",
-        })[rule.object_kind] || "Object name",
+        }[rule.object_kind] || "Object name"),
     },
     { key: "verb", label: "Verb", kind: "select", opts: "verbs" },
     {
@@ -81,15 +81,15 @@
       placeholder: "role/user or formula",
       showUnless: (rule) => rule.subject_type === "public", // "Anyone" is a wildcard, nothing to narrow
       dynamicLabel: (rule) =>
-        ({ role: "Role(s)", user: "User(s)", formula: "Formula" })[
+        ({ role: "Role(s)", user: "User(s)", formula: "Formula" }[
           rule.subject_type
-        ] || "Subject value",
+        ] || "Subject value"),
       dynamicPlaceholder: (rule) =>
         ({
           role: "e.g. Admin,Staff (comma-separated role names)",
           user: "e.g. admin@foo.com,staff@foo.com (comma-separated emails)",
           formula: 'e.g. user.department === "Sales"',
-        })[rule.subject_type] || "",
+        }[rule.subject_type] || ""),
       datalistSource: "subjectValues", // suggestions only - role/user values stay free text
       datalistKeyField: "subject_type",
     },
@@ -171,16 +171,28 @@
             class: "small",
             onclick: () => {
               const toNumber = !select.hidden;
+              if (!toNumber) {
+                const key = presetKeyForValue(number.value);
+                if (key) select.value = key;
+                // no exact match - ask before rounding the value to Normal
+                else if (
+                  confirm(
+                    `Switch to Low/Normal/High? This changes the priority from ${number.value} to Normal (0).`
+                  )
+                )
+                  select.value = "normal";
+                else return;
+              } else {
+                number.value = PRIORITY_PRESETS[select.value];
+              }
               select.hidden = toNumber;
               number.hidden = !toNumber;
               switchLink.textContent = toNumber
                 ? "Use Low/Normal/High"
                 : "Use a custom number";
-              if (toNumber) number.value = PRIORITY_PRESETS[select.value];
-              else select.value = presetKeyForValue(number.value) || "normal";
             },
           },
-          ["Use a custom number"],
+          ["Use a custom number"]
         );
         modalInputs.priority_select = select;
         modalInputs.priority_number = number;
@@ -193,8 +205,8 @@
           sel.appendChild(
             el("option", { value: o }, [
               (f.optionLabels && f.optionLabels[o]) || o,
-            ]),
-          ),
+            ])
+          )
         );
         modalInputs[f.key] = sel;
         return sel;
@@ -238,7 +250,7 @@
       const children = [label, fieldControl(f)];
       if (f.sublabel)
         children.push(
-          el("small", { class: "form-text text-muted d-block" }, [f.sublabel]),
+          el("small", { class: "form-text text-muted d-block" }, [f.sublabel])
         );
       const wrapper = el("div", { class: "mb-3" }, children);
       fieldWrappers[key] = wrapper;
@@ -255,9 +267,9 @@
           : el(
               "div",
               { class: "row" },
-              keys.map((k) => el("div", { class: "col-6" }, [fieldEntry(k)])),
-            ),
-      ),
+              keys.map((k) => el("div", { class: "col-6" }, [fieldEntry(k)]))
+            )
+      )
     );
 
     function updateFieldVisibility() {
@@ -279,7 +291,7 @@
           ];
           datalist.innerHTML = "";
           names.forEach((n) =>
-            datalist.appendChild(el("option", { value: n })),
+            datalist.appendChild(el("option", { value: n }))
           );
         }
       });
@@ -299,7 +311,7 @@
     const saveBtn = el(
       "button",
       { type: "button", class: "btn btn-primary", onclick: onModalSave },
-      ["Save"],
+      ["Save"]
     );
 
     const modalEl = el(
@@ -325,13 +337,13 @@
                   class: "btn btn-secondary",
                   "data-bs-dismiss": "modal",
                 },
-                ["Cancel"],
+                ["Cancel"]
               ),
               saveBtn,
             ]),
           ]),
         ]),
-      ],
+      ]
     );
     document.body.appendChild(modalEl);
     const bsModal = window.bootstrap && new window.bootstrap.Modal(modalEl);
@@ -339,6 +351,8 @@
     function openModal(index) {
       editingIndex = index;
       const rule = index == null ? blankRule() : rules[index];
+      modalInputs.object_name.classList.remove("is-invalid");
+      modalInputs.subject_value.classList.remove("is-invalid");
       FIELDS.forEach((f) => {
         if (f.kind === "priority") {
           const val = Number(rule.priority) || 0;
@@ -409,7 +423,7 @@
             style: `color:${active ? "#198754" : "#dc3545"}; font-weight:bold`,
             title: active ? "Active" : "Inactive",
           },
-          [active ? "✓" : "✗"],
+          [active ? "✓" : "✗"]
         ),
       ]);
     }
@@ -465,9 +479,9 @@
                       ? " ▲"
                       : " ▼"
                     : ""),
-              ],
-            ),
-          ),
+              ]
+            )
+          )
         ),
       ]);
       const tbody = el("tbody");
@@ -477,7 +491,7 @@
           (a, b) =>
             sortDir *
             ((Number(rules[a].priority) || 0) -
-              (Number(rules[b].priority) || 0)),
+              (Number(rules[b].priority) || 0))
         );
       order.forEach((i) => {
         const rule = rules[i];
@@ -499,7 +513,7 @@
                   class: "btn btn-sm btn-outline-secondary me-1",
                   onclick: () => openModal(i),
                 },
-                ["Edit"],
+                ["Edit"]
               ),
               el(
                 "button",
@@ -512,10 +526,10 @@
                     renderList();
                   },
                 },
-                ["Delete"],
+                ["Delete"]
               ),
             ]),
-          ]),
+          ])
         );
       });
       const table = el("table", {
@@ -532,8 +546,8 @@
             class: "btn btn-sm btn-primary",
             onclick: () => openModal(null),
           },
-          [el("i", { class: "fas fa-plus me-1" }), "Add rule"],
-        ),
+          [el("i", { class: "fas fa-plus me-1" }), "Add rule"]
+        )
       );
       sync();
     }

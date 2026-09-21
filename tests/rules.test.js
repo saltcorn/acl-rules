@@ -209,10 +209,10 @@ describe("acl-rules: evaluateRules", () => {
       },
     ]);
     expect(
-      evaluateRules("view", viewRequest("V", { action: "get" }), admin),
+      evaluateRules("view", viewRequest("V", { action: "get" }), admin)
     ).toBe(null);
     expect(
-      evaluateRules("view", viewRequest("V", { action: "post" }), admin),
+      evaluateRules("view", viewRequest("V", { action: "post" }), admin)
     ).toMatchObject({ decision: "deny" });
   });
 
@@ -297,8 +297,8 @@ describe("acl-rules: evaluateRules", () => {
       evaluateRules(
         "page",
         { action: "get", page: { name: "V" }, req: {} },
-        admin,
-      ),
+        admin
+      )
     ).toMatchObject({ decision: "deny" });
   });
 
@@ -317,15 +317,15 @@ describe("acl-rules: evaluateRules", () => {
       evaluateRules(
         "api",
         { action: "get", route: "scapi/sc_tables", req: {} },
-        admin,
-      ),
+        admin
+      )
     ).toMatchObject({ decision: "deny" });
     expect(
       evaluateRules(
         "api",
         { action: "get", route: "scapi/other", req: {} },
-        admin,
-      ),
+        admin
+      )
     ).toBe(null);
   });
 
@@ -368,6 +368,25 @@ describe("acl-rules: evaluateRules", () => {
     });
     expect(evaluateRules("view", viewRequest("V"), admin)).toBe(null);
   });
+
+  it("keeps other valid rules when one stored rule is individually invalid", () => {
+    getState().registerPlugin("acl-rules", require(".."), {
+      rules: JSON.stringify([
+        { id: "bad", object_kind: "view" }, // missing required fields
+        {
+          id: "r2",
+          object_kind: "view",
+          object_name: "V",
+          verb: "any",
+          subject_type: "public",
+          effect: "deny",
+        },
+      ]),
+    });
+    expect(evaluateRules("view", viewRequest("V"), admin)).toMatchObject({
+      decision: "deny",
+    });
+  });
 });
 
 describe("acl-rules: parseRules", () => {
@@ -386,7 +405,7 @@ describe("acl-rules: parseRules", () => {
 
   it("rejects a rule missing a required field", () => {
     expect(
-      parseRules(JSON.stringify([{ id: "r1", object_kind: "view" }])).error,
+      parseRules(JSON.stringify([{ id: "r1", object_kind: "view" }])).error
     ).toBeTruthy();
   });
 
@@ -401,7 +420,7 @@ describe("acl-rules: parseRules", () => {
       priority: "high",
     };
     expect(parseRules(JSON.stringify([rule])).error).toMatch(
-      /priority must be a number/,
+      /priority must be a number/
     );
   });
 
@@ -415,13 +434,47 @@ describe("acl-rules: parseRules", () => {
     };
     for (const subject_type of ["role", "user", "formula"]) {
       expect(
-        parseRules(JSON.stringify([{ ...base, subject_type }])).error,
+        parseRules(JSON.stringify([{ ...base, subject_type }])).error
       ).toMatch(/subject_value is required/);
     }
     // public doesn't need one
     expect(
-      parseRules(JSON.stringify([{ ...base, subject_type: "public" }])).error,
+      parseRules(JSON.stringify([{ ...base, subject_type: "public" }])).error
     ).toBeFalsy();
+  });
+
+  it("rejects a whitespace-only object_name or subject_value", () => {
+    const base = {
+      id: "r1",
+      object_kind: "view",
+      verb: "any",
+      subject_type: "role",
+      subject_value: "staff",
+      effect: "deny",
+    };
+    expect(
+      parseRules(JSON.stringify([{ ...base, object_name: "   " }])).error
+    ).toMatch(/object_name is required/);
+    expect(
+      parseRules(
+        JSON.stringify([{ ...base, object_name: "V", subject_value: "   " }])
+      ).error
+    ).toMatch(/subject_value is required/);
+  });
+
+  it("rejects a non-boolean enabled", () => {
+    const rule = {
+      id: "r1",
+      object_kind: "view",
+      object_name: "V",
+      verb: "any",
+      subject_type: "public",
+      effect: "deny",
+      enabled: "false",
+    };
+    expect(parseRules(JSON.stringify([rule])).error).toMatch(
+      /enabled must be a boolean/
+    );
   });
 
   it("accepts a well-formed rule list", () => {
